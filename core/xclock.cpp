@@ -6,10 +6,13 @@
 #define MIN_TICK_LEN 6
 #define CX window_width / 2
 #define CY window_height / 2
-#define HOUR_LENGTH radius * 0.72f
-#define MINUTE_LENGTH radius * 0.47f
+#define HOUR_LENGTH radius * 0.47f
+#define MINUTE_LENGTH radius * 0.72f
 #define HOUR_WIDTH 20
 #define MINUTE_WIDTH 20
+
+float s = sinf(radius);
+float c = cosf(radius);
 
 static void draw_hand_triangle(Render *r, float angle_deg, int length, int width)
 {
@@ -19,19 +22,16 @@ static void draw_hand_triangle(Render *r, float angle_deg, int length, int width
     int tip_x = CX + cosf(rad) * length;
     int tip_y = CY + sinf(rad) * length;
 
-    // Base center offset forward
-    int base_x = CX; //+ cosf(rad) * base_offset;
-    int base_y = CY; //+ sinf(rad) * base_offset;
-
     // Asymmetric base
     float lw = width * 0.35f;
     float rw = width * 0.65f;
 
-    int left_x  = base_x + cosf(rad + M_PI/2) * lw;
-    int left_y  = base_y + sinf(rad + M_PI/2) * lw;
+    int left_x  = CX + (int)lroundf(-s * lw);
+    int left_y  = CY + (int)lroundf( c * lw);
 
-    int right_x = base_x + cosf(rad - M_PI/2) * rw;
-    int right_y = base_y + sinf(rad - M_PI/2) * rw;
+    int right_x = CX + (int)lroundf( s * rw);
+    int right_y = CY + (int)lroundf(-c * rw);
+
 
     r->draw_filled_triangle(left_x, left_y, right_x, right_y, tip_x, tip_y);
 }
