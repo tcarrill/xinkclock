@@ -1,0 +1,17 @@
+# Build files
+desktop/build/
+xclock
+*.o
+*.elf
+*.bin
+
+# IDE / OS
+.DS_Store
+*.swp
+*.vscode/
+*.idea/
+
+# Arduino / ESP32
+*.pio/
+*.bin
+

@@ -9,3 +9,7 @@ To compile the SDL renderer on desktop
 cd desktop
 make
 ./xclock
+```
+
+![SDL XinkClock](sdl-xinkclock.png)
+*SDL XinkClock on macOS*
