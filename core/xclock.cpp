@@ -21,8 +21,8 @@ static void draw_hand_triangle(
     int tip_y = py + sinf(rad) * length;
 
     // Base center offset forward
-    int base_x = px + cosf(rad) * base_offset;
-    int base_y = py + sinf(rad) * base_offset;
+    int base_x = px; //+ cosf(rad) * base_offset;
+    int base_y = py; //+ sinf(rad) * base_offset;
 
     // Asymmetric base
     float lw = width * 0.35f;
@@ -68,22 +68,23 @@ void xclock_draw(Render *r, ClockTime t, int window_width, int window_height)
     // Minute hand first (behind)
     draw_hand_triangle(
         r,
-        cx, cy - 7,        // minute pivot
+        cx, cy,            
         min_angle,
         radius * 0.72f,
         20,
-        6
+        0                  
     );
 
     // Hour hand second (on top)
     draw_hand_triangle(
         r,
-        cx - 3, cy - 2,    // hour pivot
+        cx, cy,             
         hour_angle,
         radius * 0.42f,
         20,
-        4
+        0                   
     );
+
     r->flush();
 }
 
