@@ -11,5 +11,9 @@ make
 ./xclock
 ```
 
-![SDL XinkClock](sdl-xinkclock.png)
-*SDL XinkClock on macOS*
+<p align="center">
+  <img src="sdl-xinkclock.png" alt="SDL XinkClock on macOS" style="border:1px solid black;">
+  <br>
+  <em>SDL XinkClock on macOS</em>
+</p>
+
