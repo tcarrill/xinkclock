@@ -3,6 +3,7 @@ CXX = g++
 CXXFLAGS = -Wall -Wextra \
            -I/opt/homebrew/include \
            -I/opt/homebrew/include/SDL2
+CXXFLAGS += -std=c++17
 
 LDFLAGS = -L/opt/homebrew/lib \
           -lSDL2 -lSDL2_gfx -lm
