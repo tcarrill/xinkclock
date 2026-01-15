@@ -8,8 +8,8 @@
 #define CY window_height / 2
 #define HOUR_LENGTH radius * 0.47f
 #define MINUTE_LENGTH radius * 0.72f
-#define HOUR_WIDTH 20
-#define MINUTE_WIDTH 20
+#define HOUR_WIDTH 30
+#define MINUTE_WIDTH 30
 
 float s = sinf(radius);
 float c = cosf(radius);
@@ -23,8 +23,8 @@ static void draw_hand_triangle(Render *r, float angle_deg, int length, int width
     int tip_y = CY + sinf(rad) * length;
 
     // Asymmetric base
-    float lw = width * 0.35f;
-    float rw = width * 0.65f;
+    float lw = width * 0.55f;
+    float rw = width * 0.55f;
 
     int left_x  = CX + (int)lroundf(-s * lw);
     int left_y  = CY + (int)lroundf( c * lw);
