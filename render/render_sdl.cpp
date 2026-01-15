@@ -17,15 +17,6 @@ static void draw_filled_triangle(int x0, int y0, int x1, int y1, int x2, int y2)
     filledTrigonRGBA(renderer, x0, y0, x1, y1, x2, y2, 0, 0, 0, 255);
 }
 
-static void draw_circle(int cx, int cy, int r) {
-    for (int angle = 0; angle < 360; angle++) {
-        float rad = angle * 3.14159265f / 180.0f;
-        int x = cx + cosf(rad) * r;
-        int y = cy + sinf(rad) * r;
-        SDL_RenderDrawPoint(renderer, x, y);
-    }
-}
-
 static void draw_line(int x1, int y1, int x2, int y2) {
     SDL_RenderDrawLine(renderer, x1, y1, x2, y2);
 }
@@ -53,7 +44,6 @@ Render sdl_renderer(int window_width, int window_height)
     Render r = {
         .clear = clear,
         .draw_filled_triangle = draw_filled_triangle,
-        .draw_circle = draw_circle,
         .draw_line = draw_line,
         .flush = flush
     };
