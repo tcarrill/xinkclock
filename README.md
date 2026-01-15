@@ -17,10 +17,4 @@ cd desktop
 make
 ./xclock
 ```
-
-<p align="center">
-  <img src="sdl-xinkclock.png" alt="SDL XinkClock on macOS" width="800" height="694">
-  <br>
-  <em>SDL XinkClock on macOS</em>
-</p>
-
+![SDL Xinkclock on macOS](sdl-xinkclock.png)
