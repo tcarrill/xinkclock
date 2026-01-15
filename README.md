@@ -17,4 +17,3 @@ cd desktop
 make
 ./xclock
 ```
-![SDL Xinkclock on macOS](sdl-xinkclock.png)
