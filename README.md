@@ -17,3 +17,6 @@ cd desktop
 make
 ./xclock
 ```
+<div style="text-align: center;">
+  <img src="sdl-xinkclock.png" width="500" />
+</div>
