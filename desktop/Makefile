@@ -16,12 +16,14 @@ SRC = \
     main.cpp \
     ../core/xclock.cpp \
     ../render/render_sdl.cpp \
-    ../platform/hal_desktop.cpp
+    ../core/trig_table.cpp \
+    ../platform/hal_desktop.cpp 
 
 # Map sources to *normalized* object paths
 OBJ = \
     build/main.o \
     build/core/xclock.o \
+    build/core/trig_table.o \
     build/render/render_sdl.o \
     build/platform/hal_desktop.o
 
@@ -36,6 +38,10 @@ build/main.o: main.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 build/core/xclock.o: ../core/xclock.cpp
+	@mkdir -p build/core
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+build/core/trig_table.o: ../core/trig_table.cpp
 	@mkdir -p build/core
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
