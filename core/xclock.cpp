@@ -1,71 +1,132 @@
-#include "xclock.h"
-#include <math.h>
+#include "../core/xclock.h"
+#include "../render/render.h"
+#include "trig_table.h"
 
-#define DEG2RAD(d) ((d) * M_PI / 180.0f)
-#define HOUR_TICK_LEN 15
-#define MIN_TICK_LEN 6
-#define CX window_width / 2
-#define CY window_height / 2
-#define HOUR_LENGTH radius * 0.47f
-#define MINUTE_LENGTH radius * 0.72f
-#define HOUR_WIDTH 30
-#define MINUTE_WIDTH 30
+#define FIX_SHIFT 10   /* 1024 scaling */
 
-float s = sinf(radius);
-float c = cosf(radius);
+/* Geometry ratios (scaled by 1024 for precision) */
+#define RADIUS_RATIO        461   /* 0.45  * 1024 */
+#define HOUR_LEN_RATIO      512   /* 0.50  * 1024 */
+#define MIN_LEN_RATIO       768   /* 0.75  * 1024 */
+#define HOUR_BASE_RATIO     160   /* 0.075 * 1024 */
+#define MIN_BASE_RATIO      120   /* 0.055 * 1024 */
 
-static void draw_hand_triangle(Render *r, float angle_deg, int length, int width)
+/* Multiply by ratio and divide by 1024 using shift */
+#define SCALE(val, ratio) (((val) * (ratio)) >> FIX_SHIFT)
+
+// Predefined constants (no division at runtime)
+#define MINUTE_TICK_LEN  8
+#define HOUR_TICK_LEN   16
+
+#define WIDTH 400
+#define HEIGHT 300
+
+static const uint8_t tick_len_table[60] = {
+    16,8,8,8,8, 16,8,8,8,8,
+    16,8,8,8,8, 16,8,8,8,8,
+    16,8,8,8,8, 16,8,8,8,8,
+    16,8,8,8,8, 16,8,8,8,8,
+    16,8,8,8,8, 16,8,8,8,8,
+    16,8,8,8,8, 16,8,8,8,8
+};
+
+static void draw_hand_triangle(
+    Render *r,
+    int pivot_x, int pivot_y,
+    int joint_x, int joint_y,
+    int angle,
+    int length,
+    int base_width
+)
 {
-    float rad = DEG2RAD(angle_deg);
+    /* Tip (Q1.15 * int -> int) */
+    int tip_x = pivot_x + ((COS(angle) * length) >> 15);
+    int tip_y = pivot_y + ((SIN(angle) * length) >> 15);
 
-    // Tip
-    int tip_x = CX + cosf(rad) * length;
-    int tip_y = CY + sinf(rad) * length;
+    int half = base_width >> 1;
 
-    // Asymmetric base
-    float lw = width * 0.55f;
-    float rw = width * 0.55f;
+    /* Perpendicular vector */
+    int perp_x = -SIN(angle);
+    int perp_y =  COS(angle);
 
-    int left_x  = CX + (int)lroundf(-s * lw);
-    int left_y  = CY + (int)lroundf( c * lw);
+    int dx = (perp_x * half) >> 15;
+    int dy = (perp_y * half) >> 15;
 
-    int right_x = CX + (int)lroundf( s * rw);
-    int right_y = CY + (int)lroundf(-c * rw);
+    int left_x  = joint_x + dx;
+    int left_y  = joint_y + dy;
+    int right_x = joint_x - dx;
+    int right_y = joint_y - dy;
 
-
-    r->draw_filled_triangle(left_x, left_y, right_x, right_y, tip_x, tip_y);
+    r->draw_filled_triangle(
+        left_x, left_y,
+        right_x, right_y,
+        tip_x, tip_y
+    );
 }
-
 
 void xclock_draw(Render *r, ClockTime t)
 {
+    int cx = WIDTH  >> 1;
+    int cy = HEIGHT >> 1;
+
+    int min_dim = (WIDTH < HEIGHT) ? WIDTH : HEIGHT;
+
+    /* Radius */
+    int radius = SCALE(min_dim, RADIUS_RATIO);
+
+    /* Angles (no division) */
+    int minute_angle = t.minute * 6 - 90;
+    int hour_angle   = (t.hour % 12) * 30
+                     + (t.minute * 30 >> 6)  /* /60 via shift+mul */
+                     - 90;
+
+    /* Hand lengths */
+    int min_length  = SCALE(radius, MIN_LEN_RATIO);
+    int hour_length = SCALE(radius, HOUR_LEN_RATIO);
+
+    /* Hand bases */
+    int min_base  = SCALE(radius, MIN_BASE_RATIO);
+    int hour_base = SCALE(radius, HOUR_BASE_RATIO);
+
     r->clear();
 
-    // Draw tick marks
     for (int i = 0; i < 60; i++) {
-        float angle = i * 6.0f - 90.0f; // start at 12 o'clock
-        float rad = DEG2RAD(angle);
+        /* Angle in degrees */
+        int angle = i * 6 - 90;
 
-        int outer_x = CX + cosf(rad) * radius;
-        int outer_y = CY + sinf(rad) * radius;
+        /* Outer point */
+        int outer_x = cx + ((COS(angle) * radius) >> 15);
+        int outer_y = cy + ((SIN(angle) * radius) >> 15);
 
-        int tick_len = (i % 5 == 0) ? HOUR_TICK_LEN : MIN_TICK_LEN;
-        int inner_x = CX + cosf(rad) * (radius - tick_len);
-        int inner_y = CY + sinf(rad) * (radius - tick_len);
+        int tick_len = tick_len_table[i];
+
+        int inner_r = radius - tick_len;
+
+        int inner_x = cx + ((COS(angle) * inner_r) >> 15);
+        int inner_y = cy + ((SIN(angle) * inner_r) >> 15);
 
         r->draw_line(inner_x, inner_y, outer_x, outer_y);
     }
 
-    // Calculate angles
-    float hour_angle = (t.hour % 12 + t.minute / 60.0f) * 30.0f - 90.0f;
-    float minute_angle  = t.minute * 6.0f - 90.0f;
+    /* Minute hand (draw first) */
+    draw_hand_triangle(
+        r,
+        cx, cy + 5,     /* pivot */
+        cx, cy - 1,     /* joint */
+        minute_angle,
+        min_length,
+        min_base
+    );
 
-    // Minute hand first (behind)
-    draw_hand_triangle(r, minute_angle, MINUTE_LENGTH, MINUTE_WIDTH);
-
-    // Hour hand second (on top)
-    draw_hand_triangle(r, hour_angle, HOUR_LENGTH, HOUR_WIDTH);
+    /* Hour hand */
+    draw_hand_triangle(
+        r,
+        cx, cy - 5,     /* pivot */
+        cx, cy + 1,     /* joint */
+        hour_angle,
+        hour_length,
+        hour_base
+    );
 
     r->flush();
 }
-
