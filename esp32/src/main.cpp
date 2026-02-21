@@ -3,106 +3,94 @@
 #include <time.h>
 #include "esp_sntp.h"
 
-#include "secrets.h"
-#include "epd_pins.h"
+#include "../include/secrets.h"
 
-#include "render/render.h"
-#include "core/clock_time.h"
+#include "render/render_gxepd2.h"
 #include "core/xclock.h"
+#include "core/clock_time.h"
 
-Render gxepd2_renderer();
+#define NTP_SYNC_INTERVAL 86400L // 24h
+#define TZ_STRING "EST5EDT,M3.2.0/2,M11.1.0/2"  // Example for US Eastern Time
 
-static void wifi_connect()
-{
+static time_t last_ntp_sync = 0;
+
+static void wifi_connect() {
     WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    Serial.printf("WiFi connecting to '%s' ...\n", WIFI_SSID);
-
     uint32_t start = millis();
     while (WiFi.status() != WL_CONNECTED) {
         delay(250);
-        Serial.print(".");
-        if (millis() - start > 20000) {
-            Serial.println("\nWiFi timeout.");
-            return;
-        }
+        if (millis() - start > 20000) break;
     }
-    Serial.printf("\nWiFi connected: %s\n", WiFi.localIP().toString().c_str());
 }
 
-static void apply_tz()
-{
+static void apply_tz() {
     setenv("TZ", TZ_STRING, 1);
     tzset();
 }
 
-static bool ntp_sync()
-{
+static bool ntp_sync() {
     apply_tz();
     sntp_set_sync_mode(SNTP_SYNC_MODE_IMMED);
     configTime(0, 0, "time.google.com", "pool.ntp.org", "time.nist.gov");
 
-    Serial.print("Waiting for NTP sync");
-    for (int i = 0; i < 60; i++) {
+    for (int i = 0; i < 60; ++i) {
         if (time(nullptr) > 1700000000) {
-            Serial.println(" OK");
+            last_ntp_sync = time(nullptr);
             return true;
         }
         delay(250);
-        Serial.print(".");
     }
-    Serial.println(" FAILED");
     return false;
 }
 
-static int last_minute = -1;
-
-static ClockTime now_local()
-{
+static ClockTime now_local() {
     apply_tz();
     time_t now = time(nullptr);
     tm t{};
     localtime_r(&now, &t);
+    Serial.printf("[DEBUG] Localtime: %02d:%02d\n", t.tm_hour, t.tm_min);
     return ClockTime{ t.tm_hour, t.tm_min };
 }
 
-void setup()
-{
+void setup() {
     Serial.begin(115200);
     delay(1500);
-    Serial.println("\nBOOT xinkclock");
-
-    Render r = gxepd2_renderer();
+    Serial.println("Booting xinkclock...");
 
     wifi_connect();
-    if (!ntp_sync()) {
-        Serial.println("No time; skipping initial draw.");
-        return;
-    }
+    ntp_sync();
 
+    static RendererGXEPD2 renderer;
     ClockTime ct = now_local();
-    Serial.printf("Local time: %02d:%02d\n", ct.hour, ct.minute);
 
-    last_minute = ct.minute;
-    xclock_draw(&r, ct);
+    // Draw initial full face
+    xclock_draw_face(renderer);
+    xclock_draw_hands(renderer, ct);
+    renderer.flush();
 }
 
-void loop()
-{
-    if (time(nullptr) < 1700000000) {
-        delay(500);
-        return;
-    }
+void loop() {
+    static int last_minute = -1;
 
     ClockTime ct = now_local();
 
-    if (ct.minute != last_minute) {
-        last_minute = ct.minute;
-        Serial.printf("Refresh %02d:%02d\n", ct.hour, ct.minute);
-
-        Render r = gxepd2_renderer();
-        xclock_draw(&r, ct);
+    // Re-sync NTP every 24h
+    if (time(nullptr) - last_ntp_sync >= NTP_SYNC_INTERVAL) {
+        Serial.println("Re-syncing NTP...");
+        wifi_connect();
+        ntp_sync();
     }
 
-    delay(250);
+    // Only update hands if minute changed
+    if (ct.minute != last_minute) {
+        last_minute = ct.minute;
+
+        static RendererGXEPD2 renderer;
+        xclock_draw_face(renderer);
+        xclock_draw_hands(renderer, ct);
+        renderer.flush();
+    }
+
+    delay(500);
 }
