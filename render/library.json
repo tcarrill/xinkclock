@@ -1,0 +1,5 @@
+{
+  "name": "RenderGXEPD2",
+  "version": "1.0.0",
+  "srcFilter": ["+<*.h>", "+<render_gxepd2.cpp>"]
+}

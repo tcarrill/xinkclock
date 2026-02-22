@@ -1,11 +1,11 @@
 #include "../core/xclock.h"
-#include "../render/render.h"
+#include "../render/render_sdl.h"
 #include "../core/clock_time.h"
 #include <SDL2/SDL.h>
 
 int main(void)
 {
-    Render r = sdl_renderer(window_width, window_height); 
+    RendererSDL renderer(window_width, window_height);
 
     // Simple SDL loop to keep window open
     SDL_Event e;
@@ -27,11 +27,15 @@ int main(void)
             }
         }
 
+
         Uint32 now = SDL_GetTicks();
         if (now - last_tick >= 1000) {
             last_tick = now;
             ClockTime t = get_current_time();
-            xclock_draw(&r, t);
+            renderer.clear();
+            xclock_draw_face(renderer);
+            xclock_draw_hands(renderer, t);
+            renderer.flush();
         }
         SDL_Delay(10);
     }

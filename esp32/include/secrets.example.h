@@ -1,0 +1,7 @@
+#pragma once
+
+// Copy this file to secrets.h and fill in your credentials.
+// secrets.h is .gitignored and will not be committed.
+
+#define WIFI_SSID     "your-ssid"
+#define WIFI_PASSWORD "your-password"
