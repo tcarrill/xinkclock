@@ -3,15 +3,20 @@
 #include <time.h>
 #include "esp_sntp.h"
 #include "esp_sleep.h"
-
-
 #include "../include/secrets.h"
-
 #include "render/render_gxepd2.h"
 #include "core/xclock.h"
 #include "core/clock_time.h"
 
 #define NTP_SYNC_INTERVAL 86400L // 24h
+
+// POSIX TZ string for your timezone.
+// Examples:
+//   US Eastern:  "EST5EDT,M3.2.0/2,M11.1.0/2"
+//   US Central:  "CST6CDT,M3.2.0/2,M11.1.0/2"
+//   US Pacific:  "PST8PDT,M3.2.0/2,M11.1.0/2"
+//   UTC:         "UTC0"
+// Full list: https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
 #define TZ_STRING "EST5EDT,M3.2.0/2,M11.1.0/2"  // Example for US Eastern Time
 
 static time_t last_ntp_sync = 0;
@@ -141,5 +146,5 @@ void loop() {
     xclock_draw_face(renderer);
     xclock_draw_hands(renderer, ct);
     renderer.flush();
-     delay(seconds_until_next_minute() * 1000);
+    delay(seconds_until_next_minute() * 1000);
 }
