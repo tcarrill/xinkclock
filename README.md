@@ -20,3 +20,7 @@ make
 <div style="text-align: center;">
   <img src="sdl-xinkclock.png" width="500" />
 </div>
+
+<div style="text-align: center;">
+  <img src="image0.jpeg" width="500" />
+</div>
