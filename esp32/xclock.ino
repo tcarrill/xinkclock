@@ -3,7 +3,7 @@ extern "C" {
   #include "../render/render.h"
 }
 
-// Temporary stubs until you add e-ink
+// tmp stubout
 static void clear() {}
 static void circle(int,int,int) {}
 static void line(int,int,int,int) {}

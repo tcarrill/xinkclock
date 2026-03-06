@@ -1,51 +1,86 @@
-#include "render.h"
-#include <SDL2/SDL.h>
+#include "render_sdl.h"
 #include <SDL2/SDL2_gfxPrimitives.h>
-#include <math.h>
-#include <stdio.h>
+#include <stdexcept>
+#include <cstdio>
 
-static SDL_Window   *window   = NULL;
-static SDL_Renderer *renderer = NULL;
-
-static void clear(void) {
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderClear(renderer);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-}
-
-static void draw_filled_triangle(int x0, int y0, int x1, int y1, int x2, int y2) {
-    filledTrigonRGBA(renderer, x0, y0, x1, y1, x2, y2, 0, 0, 0, 255);
-}
-
-static void draw_line(int x1, int y1, int x2, int y2) {
-    SDL_RenderDrawLine(renderer, x1, y1, x2, y2);
-}
-
-static void flush(void) {
-    SDL_RenderPresent(renderer);
-}
-
-Render sdl_renderer(int window_width, int window_height)
+RendererSDL::RendererSDL(int windowWidth, int windowHeight)
+    : width_(windowWidth), height_(windowHeight)
 {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-        fprintf(stderr, "SDL init failed: %s\n", SDL_GetError());
+        throw std::runtime_error(SDL_GetError());
     }
 
-    window = SDL_CreateWindow(
+    window_ = SDL_CreateWindow(
         "xclock",
         SDL_WINDOWPOS_CENTERED,
         SDL_WINDOWPOS_CENTERED,
-        window_width, window_height,
+        windowWidth,
+        windowHeight,
         SDL_WINDOW_SHOWN
     );
 
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (!window_) {
+        throw std::runtime_error(SDL_GetError());
+    }
 
-    Render r = {
-        .clear = clear,
-        .draw_filled_triangle = draw_filled_triangle,
-        .draw_line = draw_line,
-        .flush = flush
-    };
-    return r;
+    renderer_ = SDL_CreateRenderer(
+        window_,
+        -1,
+        SDL_RENDERER_ACCELERATED
+    );
+
+    if (!renderer_) {
+        throw std::runtime_error(SDL_GetError());
+    }
+
+    // Default drawing color = black
+    SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+}
+
+int RendererSDL::width() const { return width_; }
+int RendererSDL::height() const { return height_; }
+
+RendererSDL::~RendererSDL()
+{
+    if (renderer_) {
+        SDL_DestroyRenderer(renderer_);
+    }
+
+    if (window_) {
+        SDL_DestroyWindow(window_);
+    }
+
+    SDL_Quit();
+}
+
+void RendererSDL::clear()
+{
+    SDL_SetRenderDrawColor(renderer_, 255, 255, 255, 255);
+    SDL_RenderClear(renderer_);
+
+    SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
+}
+
+void RendererSDL::drawLine(int x1, int y1, int x2, int y2)
+{
+    SDL_RenderDrawLine(renderer_, x1, y1, x2, y2);
+}
+
+void RendererSDL::drawFilledTriangle(
+    int x0, int y0,
+    int x1, int y1,
+    int x2, int y2)
+{
+    filledTrigonRGBA(
+        renderer_,
+        x0, y0,
+        x1, y1,
+        x2, y2,
+        0, 0, 0, 255
+    );
+}
+
+void RendererSDL::flush()
+{
+    SDL_RenderPresent(renderer_);
 }

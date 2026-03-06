@@ -32,7 +32,6 @@ all: $(TARGET)
 $(TARGET): $(OBJ)
 	$(CXX) $(OBJ) -o $@ $(LDFLAGS)
 
-# Explicit, normalized rules (this is the key)
 build/main.o: main.cpp
 	@mkdir -p build
 	$(CXX) $(CXXFLAGS) -c $< -o $@
